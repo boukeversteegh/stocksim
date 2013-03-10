@@ -238,21 +238,22 @@ def runexperiment(repetitions):
 				exchange.updateRates()
 		
 		hasprofit = (balance['USD'] < account.getTotalValueIn('USD', exchange))
-		if hasprofit:
-			return 1
-		else:
-			return 0
+		return {
+			"hasprofit": hasprofit,
+			"account": account,
+			"exchange": exchange
+		}
 try:
 	numexperiments = int(sys.argv[1])
-
-	hasprofitcount = 0
-	experiments = []
-	p = Pool(32)
 	repetitions = int(sys.argv[2])
-	result = p.map(runexperiment, [repetitions]*numexperiments)
+
+	p = Pool(32)
+	results = p.map(runexperiment, [repetitions]*numexperiments)
 	
-	hasprofitcount = sum(result)
-	print (hasprofitcount/float(numexperiments))
+	hasprofitcount = sum([1 for result in results if result['hasprofit']])
+	averagevalue = sum([result['account'].getTotalValueIn('USD', result['exchange']) for result in results]) / numexperiments
+	print "Success rate: ", (hasprofitcount/float(numexperiments))
+	print "Average value:", averagevalue, 'USD'
 
 except KeyboardInterrupt:
 	sys.exit()
