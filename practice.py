@@ -215,7 +215,7 @@ from multiprocessing import Pool
 def runexperiment(repetitions):
 		rates			= {'BTC': 1, 'USD': 40}
 		balance			= {'BTC': 0, 'USD': 500}
-		volatilities	= {'BTC': 0, 'USD': 0.1}
+		volatilities	= {'BTC': 0, 'USD': float(sys.argv[3])}
 
 		rategenerator	= RandomRateGenerator(rates, volatilities)
 		exchange		= Exchange(rategenerator)
@@ -229,23 +229,29 @@ def runexperiment(repetitions):
 
 
 		exchange.exchange(account, 250, 'USD', 'BTC')
-
-		for _ in range(0, repetitions):
-				#printRates()
-				#printStatus()
-				strategy.run()
-				#printStatus()
-				exchange.updateRates()
-		
-		value = account.getTotalValueIn('USD', exchange)
-		hasprofit = (balance['USD'] < value)
-		return {
-			"hasprofit": hasprofit,
-			"account": account,
-			"exchange": exchange,
-			"value": value
-		}
+		global stop
+		try:
+			for _ in range(0, repetitions):
+					if stop:
+						return
+					#printRates()
+					#printStatus()
+					strategy.run()
+					#printStatus()
+					exchange.updateRates()
+			
+			value = account.getTotalValueIn('USD', exchange)
+			hasprofit = (balance['USD'] < value)
+			return {
+				"hasprofit": hasprofit,
+				"account": account,
+				"exchange": exchange,
+				"value": value
+			}
+		except KeyboardInterrupt:
+			pass
 try:
+	stop = False
 	numexperiments = int(sys.argv[1])
 	repetitions = int(sys.argv[2])
 
@@ -267,31 +273,3 @@ except KeyboardInterrupt:
 	sys.exit()
 
 #exchange.exchange(account, 40, 'USD', 'BTC')
-
-"""
-while True:
-	try:
-		d = random.gauss(0, 0.05)
-		if d < 0:
-			rate *= (d+1)
-		elif d > 0:
-			rate /= (1-d)
-
-		print ''
-		print "Account:\t%s,\t\t%s" % tuple([ "%.3f %s" % x for x in zip(account, units)])
-		print "Value:  \t=%.2f %s,\t\t=%.2f %s" % (account[0] * rate, units[1], account[1] / rate, units[0])
-		print 'Rate:   \t1.00%s\t=\t%.3f %s' % (units[0], rate, units[1])
-
-		(action, amount) = strategy.getAction()
-
-		# Buy or Sell Resource 2
-		if action == 'sell':
-			account[0] += amount / rate
-			account[1] -= amount
-		if action == 'buy':
-			account[0] -= amount * rate
-			account[1] += amount
-
-	except KeyboardInterrupt:
-		print "Done"
-		break"""
