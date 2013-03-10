@@ -210,9 +210,9 @@ def printStatus():
 def printRates():
 	print Colors.RED + " = ".join(["%.2f %s" % (exchange.rates[unit], unit) for unit in exchange.rates ]), Colors.RESET
 
-import threading
-class Experiment(threading.Thread):
-	def run(self):
+from multiprocessing import Pool
+
+def runexperiment(_):
 		rates			= {'BTC': 1, 'USD': 40}
 		balance			= {'BTC': 0, 'USD': 500}
 		volatilities	= {'BTC': 0, 'USD': 0.1}
@@ -231,7 +231,6 @@ class Experiment(threading.Thread):
 		exchange.exchange(account, 250, 'USD', 'BTC')
 
 		for _ in range(0, 1000):
-			
 				#printRates()
 				#printStatus()
 				strategy.run()
@@ -239,24 +238,22 @@ class Experiment(threading.Thread):
 				exchange.updateRates()
 		
 		hasprofit = (balance['USD'] < account.getTotalValueIn('USD', exchange))
-		global hasprofitcount
 		if hasprofit:
-			hasprofitcount+=1
+			return 1
+		else:
+			return 0
 try:
 	numexperiments = 1000
 
 	hasprofitcount = 0
 	experiments = []
-	for _ in range(0, numexperiments):
-		experiment = Experiment()
-		experiment.start()
-		experiments.append(experiment)
-		#printRates()
-		#printStatus()
-	for experiment in experiments:
-		experiment.join()
+	p = Pool(4)
 
+	result = p.map(runexperiment, range(0, numexperiments))
+	
+	hasprofitcount = sum(result)
 	print (hasprofitcount/float(numexperiments))
+
 except KeyboardInterrupt:
 	sys.exit()
 
