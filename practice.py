@@ -212,7 +212,7 @@ def printRates():
 
 from multiprocessing import Pool
 
-def runexperiment(_):
+def runexperiment(repetitions):
 		rates			= {'BTC': 1, 'USD': 40}
 		balance			= {'BTC': 0, 'USD': 500}
 		volatilities	= {'BTC': 0, 'USD': 0.1}
@@ -230,7 +230,7 @@ def runexperiment(_):
 
 		exchange.exchange(account, 250, 'USD', 'BTC')
 
-		for _ in range(0, 1000):
+		for _ in range(0, repetitions):
 				#printRates()
 				#printStatus()
 				strategy.run()
@@ -243,13 +243,13 @@ def runexperiment(_):
 		else:
 			return 0
 try:
-	numexperiments = 1000
+	numexperiments = int(sys.argv[1])
 
 	hasprofitcount = 0
 	experiments = []
-	p = Pool(4)
-
-	result = p.map(runexperiment, range(0, numexperiments))
+	p = Pool(32)
+	repetitions = int(sys.argv[2])
+	result = p.map(runexperiment, [repetitions]*numexperiments)
 	
 	hasprofitcount = sum(result)
 	print (hasprofitcount/float(numexperiments))
